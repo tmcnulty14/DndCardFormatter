@@ -1,0 +1,24 @@
+{% raw %}{{{% endraw %}card,spellcard,--spell-color:"var({{ color }})"
+{% raw %}{{{% endraw %}spellwhite
+{% raw %}{{{% endraw %}spellcardheader
+#### {{ name }}
+{% raw %}}}{% endraw %}
+{% raw %}{{{% endraw %}spelldetails
+|   |   |
+|:-:|:-:|
+|<h6>CASTING TIME</h6>{{ casting_time }}|<h6>RANGE</h6>{{ range }}|
+|<h6>COMPONENTS</h6>{{ components_short }}|<h6>DURATION</h6>{{ duration }}|
+{% raw %}}}{% endraw %}
+{% raw %}{{{% endraw %}spellmaterials
+{{ materials }}
+{% raw %}}}{% endraw %}
+{% raw %}{{{% endraw %}cardbody,spellcardbody,font-size:{{ font_size }};
+{{ card_text }}
+{% raw %}}}{% endraw %}
+{% raw %}}}{% endraw %}
+{% raw %}{{{% endraw %}spellcardfooter
+|   |   |
+|:--|--:|
+|{{ source }}|{{ level_and_school }}|
+{% raw %}}}
+}}{% endraw %}
