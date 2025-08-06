@@ -22,6 +22,7 @@ DEFAULT_SPELL_COLOR = '--spell-color'
 DEFAULT_ITEM_COLOR = 'rgba(200,100,0,.15)'
 
 DEFAULT_BODY_FONT_SIZE_PX = 12.85
+MIN_BODY_FONT_SIZE_PX = 8
 
 environment = Environment(loader=FileSystemLoader(TEMPLATES_PATH))
 spell_template = environment.get_template('spell_card.html')
@@ -47,8 +48,8 @@ def sanitize_keys(spell: dict[str, str]) -> dict[str, str]:
 
 def generate_spell_html(spell: dict[str, str]) -> str:
     # Set spell color
-    source = spell['source']
-    color = COLOR_MAP[source] if source in COLOR_MAP else DEFAULT_SPELL_COLOR
+    simple_category = spell['source'].split(',')[0]
+    color = COLOR_MAP[simple_category] if simple_category in COLOR_MAP else DEFAULT_SPELL_COLOR
 
     spell['name'] = spell['name'].upper()
 
@@ -78,21 +79,40 @@ def set_fontsize(card: dict[str, str]):
     font_size = DEFAULT_BODY_FONT_SIZE_PX
 
     # Reduce font size if the text likely won't fit on the card.
-    if line_estimate(card['card_text']) > 14:
-        font_size = 10
+    while not text_fits(card, font_size) and font_size > MIN_BODY_FONT_SIZE_PX:
+        font_size -= .25
 
-    card['font_size'] = f'{font_size}px'
+    card['font_size'] = f'{max(font_size, MIN_BODY_FONT_SIZE_PX)}px'
 
 
-def line_estimate(text: str) -> int:
-    # About 40 chars to a line at default font size and card width.
+def text_fits(card: dict[str, str], font_size: float) -> int:
+    # Calculate rough chars per line estimate based on width.
+    card_body_width = 220.667
+    chars_per_line = int(card_body_width // (font_size / 2.5)) # Assume that characters use a little less than half the font size in width.
+
+    # Calculate max lines estimate based on height.
+    card_body_height = 221.773
+    max_lines = card_body_height // (font_size * 1.25) # Assume that lines have ~25% padding around them.
+    if card['duration'].startswith('Concentration'):
+        max_lines -= 1
+
+    # Include materials in the text.
+    text = card['card_text']
+    if 'materials' in card and card['materials']:
+        text = card['materials'] + '\n' + text
+    text = text.replace('\n\n', '\n   ')
+    text = text.replace('\n   :\n   ', '\n\n\n')
+
+    # Count how many lines the text will take.
+
     lines = 0
     i = 0
     while i < len(text):
-        next_break = text.find('\n', i, i + 40)
+        next_break = text.find('\n', i, i + chars_per_line)
         if next_break > 0:
             i = next_break + 1
         else:
-            i += 40
+            i += chars_per_line
         lines += 1
-    return lines
+
+    return lines < max_lines

@@ -1,0 +1,32 @@
+{
+  "Absorb Elements": {
+    "Trigger": "when you take acid, cold, fire, lightning, or thunder damage"
+  },
+  "Shield": {
+    "Trigger": "when you are hit by an attack roll or targeted by Magic Missile"
+  },
+  "Feather Fall": {
+    "Trigger": "when you or a creature you can see within 60 feet of you falls"
+  },
+  "Hellish Rebuke": {
+    "Trigger": "when you take damage from a creature you can see within 60 feet"
+  },
+  "Silvery Barbs": {
+    "Trigger": "when a creature you can see within 60 feet succeeds on a d20 test"
+  },
+  "Counterspell": {
+    "Trigger": "when you see a creature within 60 feet casting a spell with components"
+  },
+  "Temporal Shunt": {
+    "Trigger": "when a creature you can see makes an attack roll or starts to cast a spell"
+  },
+  "Control Water": {
+    "Card Text": "You control water in a **100 foot cube**. Choose one, Magic action to change:\n\n* **Flood.** Raise water level by **+20 ft.**, or make a **20 ft** high wave across that carries Huge or smaller vehicles with it (25% to capsize).\n* **Part Water.** Empty area into a trench with walls of water. After, it refills over 1 round.\n* **Redirect Flow.** Change direction of water flow in the area, as desired.\n* **Whirlpool.** **50 ft** diam., **25 ft** deep. Pulls any creature within **25 ft** of it **10 ft** closer. A creature that enters the whirpool for the first time in a turn or ends its turn there makes a **STR** save vs. **2d8 Bldg.** (half on success). Swimming away requires a successful Athletics check (as an action) vs. your DC."
+  },
+  "Gust of Wind": {
+    "Card Text": "A **Line** of strong wind **60 feet** long and **10 feet** wide blasts from you in a direction you choose for the duration.\n\nEach creature in the **Line** when it's cast or when they end their turn must make a **Strength** saving throw or be pushed **15 feet** away along the line.\n\n\nThe gust disperses gasses and extinguishes flames. Moving towards you in the line costs double.\n\nYou can redirect the line as a **Bonus Action** on later turns."
+  },
+  "Augury": {
+    "Card Text": "You receive an omen from an otherworldly entity about the results of a course of action that you plan to take within the next 30 minutes.\n\nThe omen represents either **Weal** (good), **Woe** (bad), **Weal and Woe** (good and bad), or **Indifference** (neither good nor bad).\n\nThe spell doesn't account for circumstances, such as other spells, that might change the results.\n\nIf you cast the spell more than once before finishing a **Long Rest**, there is a cumulative **25 percent** chance for each casting after the first that you get no answer."
+  }
+}

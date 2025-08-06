@@ -1,4 +1,6 @@
 import csv, re
+import json
+from typing import Any, Generator
 
 # 5e.tools Field Names:
 # fieldnames_5etools = [
@@ -17,22 +19,32 @@ import csv, re
 #     'At Higher Levels',
 # ]
 
-damage_types = ['Piercing', 'Bludgeoning', 'Slashing', 'Cold', 'Fire', 'Lightning', 'Thunder', 'Poison', 'Acid',
-                'Necrotic', 'Radiant', 'Force', 'Psychic']
 abilities = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma']
+skills = ['Athletics', 'Acrobatics', 'Sleight of Hand', 'Stealth', 'Arcana', 'History', 'Investigation', 'Nature',
+          'Religion', 'Animal Handling', 'Insight', 'Medicine', 'Perception', 'Survival', 'Deception', 'Intimidation',
+          'Performance', 'Persuasion']
 conditions = ['Blinded', 'Charmed', 'Deafened', 'Exhaustion', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible',
               'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious']
-areas = ['Cube', 'Line', 'Cone', 'Cylinder', 'Sphere']
+damage_types = ['Piercing', 'Bludgeoning', 'Slashing', 'Cold', 'Fire', 'Lightning', 'Thunder', 'Poison', 'Acid',
+                'Necrotic', 'Radiant', 'Force', 'Psychic']
+areas = ['Circle', 'Cone', 'Cube', 'Cylinder', 'Emanation', 'Line', 'Square', 'Sphere']
+sizes = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
 upcast_words = ['Using a Higher-Level Spell Slot.', 'At Higher Levels.', 'Cantrip Upgrade.']
-bolded_words = upcast_words + conditions + damage_types + abilities + areas
-bolded_patterns = [r'[0-9]+d[0-9]+( [+-] [0-9]+)?', r'[+-][0-9]+', '[0-9]+[ -]fe*o*t']
+creature_types = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Creature', 'Dragon', 'Elemental', 'Fey', 'Fiend',
+                  'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead']
+actions = ['Bonus Action', 'Action', 'Attack', 'Dash', 'Disengage', 'Dodge', 'Help', 'Hide', 'Magic', 'Search', 'Study']
+rules_words = ['AC', 'Armor Class', 'Advantage', 'Disadvantage', 'Difficult Terrain', 'Resistance', 'Immunity', 'Short Rest', 'Long Rest', 'Telepathy']
+environmental_words = ['Bright Light', 'Dim Light', 'Lightly Obscured', 'Heavily Obscured']
+senses = ['Blindsight', 'Darkvision', 'Tremorsense']
+bolded_words = abilities + skills + conditions + damage_types + areas + sizes + upcast_words + creature_types + actions + rules_words + environmental_words + senses
+bolded_patterns = [r'[0-9]+d[0-9]+( [+-] [0-9]+)?', r'[0-9]*[+-][0-9]+', r'[,0-9]+[ -]fe*o*t(-\w+)?', r'[0-9]+ percent']
 bolded_regex = re.compile('(' + '|'.join(bolded_words + bolded_patterns) + ')')
 
 italic_words = upcast_words + conditions
 italic_regex = re.compile('(' + '|'.join(italic_words) + ')')
 
 
-def parse_csv(path: str) -> [dict[str, str]]:
+def parse_csv(path: str) -> Generator[dict[str | Any, str | Any], Any, None]:
     file = open(path, "r")
 
     reader = csv.DictReader(file)
@@ -64,6 +76,8 @@ def process_spell(spell: dict[str, str]):
     make_lvl(spell)
     split_materials(spell)
     make_cardtext(spell)
+
+    apply_overrides(spell)
     # print(f'Processed spell: {spell}')
 
 
@@ -85,7 +99,7 @@ def make_lvl(spell: dict[str, str]):
         spell['Level and School'] = f"{spell['School']} {spell["Level"]}"
     else:
         spell['Level and School'] = f"{spell["Level"]} level {spell['School']}"
-    spell["Lvl"] = lvl
+    spell["Lvl"] = str(lvl)
 
 def split_materials(spell: dict[str, str]):
     components = spell["Components"]
@@ -127,3 +141,18 @@ def format_words(spell: dict[str, str]):
 def process_item(item: dict[str, str]) -> dict[str, str]:
     make_cardtext(item)
     return item
+
+
+def apply_overrides(card: dict[str, str]) -> dict[str, str]:
+    if card['Name'] in overrides:
+        card.update(overrides[card['Name']])
+    return card
+
+
+def load_overrides() -> dict[str, dict[str, str]]:
+    with open('overrides/card_overrides.json', 'r') as file:
+        # Use json.load() to parse the file content into a Python dictionary
+        return json.load(file)
+
+
+overrides = load_overrides()
