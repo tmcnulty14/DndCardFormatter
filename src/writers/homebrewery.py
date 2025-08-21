@@ -93,7 +93,7 @@ def text_fits(card: dict[str, str], font_size: float) -> int:
     # Calculate max lines estimate based on height.
     card_body_height = 221.773
     max_lines = card_body_height // (font_size * 1.25) # Assume that lines have ~25% padding around them.
-    if card['duration'].startswith('Concentration'):
+    if 'duration' in card and card['duration'].startswith('Concentration'):
         max_lines -= 1
 
     # Include materials in the text.

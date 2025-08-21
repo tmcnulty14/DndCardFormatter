@@ -1,7 +1,6 @@
-{% raw %}{{{% endraw %}card,spellcard,--spell-color:"var({{ color }})"
-{% raw %}{{{% endraw %}spellwhite
-{% raw %}{{{% endraw %}spellcardheader
-#### {{ name }}
+{% raw %}{{{% endraw %}card,spellcard,--card_color:"var({{ color }})"
+{% raw %}{{{% endraw %}cardheader,spellcardheader
+#### {{ name }}  {% raw %}{{{% endraw %}spelllevel {{ lvl }} {% raw %}}}{% endraw %}
 {% raw %}}}{% endraw %}
 {% raw %}{{{% endraw %}spelldetails
 |   |   |
@@ -15,10 +14,9 @@
 {% raw %}{{{% endraw %}cardbody,spellcardbody,font-size:{{ font_size }};
 {{ card_text }}
 {% raw %}}}{% endraw %}
-{% raw %}}}{% endraw %}
 {% raw %}{{{% endraw %}spellcardfooter
 |   |   |
 |:--|--:|
-|{{ source }}|{{ level_and_school }}|
+|{{ source }}|{{ school }}|
 {% raw %}}}
 }}{% endraw %}
