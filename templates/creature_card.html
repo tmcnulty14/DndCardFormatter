@@ -1,0 +1,97 @@
+{% set ability_names = ['str', 'dex', 'con', 'int', 'wis', 'cha'] -%}
+
+
+{% raw %}{{{% endraw %}card,statcard,--card_color:"{{ color }}"
+{% raw %}{{{% endraw %}cardheader,statcardheader
+{% raw %}{{{% endraw %}statcardname
+#### {{ name }}
+*{{ size }} {{ type }}{{ ', ' + alignment if alignment != 'unaligned'}}*
+{% raw %}}}{% endraw %}
+{% raw %}{{{% endraw %}statcardchallenge
+#### {{ cr }}
+#### cr
+{% raw %}}}{% endraw %}
+{% raw %}}}{% endraw %}
+{% raw %}{{{% endraw %}abilities
+<table>
+<thead>
+    <tr>{% for ability_name in ability_names %}
+        <th>{{ ability_name | upper }}</th>{% endfor %}
+    </tr>
+</thead>
+<tbody>
+    <tr>{% for ability in ability_names %}
+        <td>{{ abilities[ability]['score'] }}</td>{% endfor %}
+    </tr>
+    <tr>{% for ability in ability_names %}
+        <td class="{{ abilities[ability]['sign'] }}{{ ' colcap' if saving_throws and 'save' not in abilities[ability] }}">{{ abilities[ability]['mod'] }}</td>{% endfor %}
+    </tr>
+    {%- if saving_throws %}
+    <tr>{% for ability in ability_names %}
+        {% if 'save' in abilities[ability] -%}
+        <td class="{{ abilities[ability]['sign'] }}">{{ abilities[ability]['save'] }}</td>
+        {%- else -%}
+        <td></td>
+        {%- endif -%}
+        {%- endfor %}
+    </tr>
+    {%- endif -%}
+</tbody>
+</table>
+<table>
+    <tbody>
+    <tr>
+        <td><strong>AC</strong> {{ ac }}</td>
+        <td><strong>HP</strong> {{ hp }}</td>
+    </tr>
+    </tbody>
+</table>
+{% raw %}}}{% endraw %}
+{% raw %}{{{% endraw %}cardbody,statcardbody
+{% raw %}{{{% endraw %}statcarddetails
+**Speed** :: {{ speed }} {% raw %}{{{% endraw %}initiative **Initiative** {{ initiative }}{% raw %}}}{% endraw %}
+{%- if skills %}
+**Skills** :: {{ skills }}
+{%- endif -%}
+
+{%- if vulnerabilities %}
+**Vulnerabilities** :: {{ vulnerabilities }}
+{%- endif -%}
+
+{%- if resistances %}
+**Resistances** :: {{ resistances }}
+{%- endif -%}
+
+{%- if immunities %}
+**Immunities** :: {{ immunities }}
+{%- endif -%}
+
+{%- if senses %}
+**Senses** :: {{ senses }}
+{%- endif -%}
+
+{%- if languages %}
+**Languages** :: {{ languages }}
+{%- endif %}
+{% raw %}}}{% endraw %}
+
+{%- if traits %}
+{{ traits }}
+{%- endif -%}
+
+{%- if actions %}
+###### Actions
+{{ actions }}
+{%- endif -%}
+
+{%- if bonus_actions %}
+###### Bonus Actions
+{{ bonus_actions }}
+{%- endif -%}
+
+{%- if reactions %}
+###### Reactions
+{{ reactions }}
+{%- endif %}
+{% raw %}}}{% endraw %}
+{% raw %}}}{% endraw %}

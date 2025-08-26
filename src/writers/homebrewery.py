@@ -18,6 +18,20 @@ COLOR_MAP = {
     'Artificer': '--artificer_copper',
 }
 
+CHALLENGE_COLORS = {
+    '0': "rgb(83, 135, 81)",
+    '1/8': "rgb(102, 119, 65)",
+    '1/4': "rgb(148, 147, 75)",
+    '1/2': "rgb(194, 174, 85)",
+    '1': "rgb(163, 124, 62)",
+    '2': "rgb(140, 94, 43",
+    '3': "rgb(140, 83, 43)"
+}
+HIGHER_CHALLENGE_COLOR =  "rgb(99, 53, 36)"
+
+ABILITIES = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
+
+
 DEFAULT_SPELL_COLOR = '--spell-color'
 DEFAULT_ITEM_COLOR = 'rgba(200,100,0,.15)'
 
@@ -27,16 +41,20 @@ MIN_BODY_FONT_SIZE_PX = 8
 environment = Environment(loader=FileSystemLoader(TEMPLATES_PATH))
 spell_template = environment.get_template('spell_card.html')
 item_template = environment.get_template('item_card.html')
+creature_template = environment.get_template('creature_card.html')
 
 def generate_card_html(card: dict[str, str]) -> str:
     card = sanitize_keys(card)
 
-    set_fontsize(card)
+    if 'card_text' in card:
+        set_fontsize(card)
 
     if card['card_type'] == 'Spell':
         return generate_spell_html(card)
     elif card['card_type'] == 'Item':
         return generate_item_html(card)
+    elif card['card_type'] == 'Creature':
+        return generate_creature_html(card)
 
     raise TypeError(f'Unknown card type {card['card_type']}')
 
@@ -46,25 +64,33 @@ def sanitize_keys(spell: dict[str, str]) -> dict[str, str]:
     return {key.lower().replace(' ', '_'): value for key, value in spell.items()}
 
 
-def generate_spell_html(spell: dict[str, str]) -> str:
+def generate_spell_html(data: dict[str, str]) -> str:
     # Set spell color
-    simple_category = spell['source'].split(',')[0]
-    color = COLOR_MAP[simple_category] if simple_category in COLOR_MAP else DEFAULT_SPELL_COLOR
+    simple_category = data['source'].split(',')[0]
+    data['color'] = COLOR_MAP[simple_category] if simple_category in COLOR_MAP else DEFAULT_SPELL_COLOR
 
-    spell['name'] = spell['name'].upper()
+    data['name'] = data['name'].upper()
 
-    return spell_template.render(spell, color=color)
+    return spell_template.render(data)
 
 
-def generate_item_html(item: dict[str, str]) -> str:
+def generate_item_html(data: dict[str, str]) -> str:
     # Title-case type and rarity.
     for field in ['type', 'rarity']:
-        item[field] = item[field].title()
+        data[field] = data[field].title()
 
     # Set up attunement.
-    format_attunement(item)
+    format_attunement(data)
 
-    return item_template.render(item, color=DEFAULT_ITEM_COLOR)
+    return item_template.render(data, color=DEFAULT_ITEM_COLOR)
+
+
+def generate_creature_html(data: dict[str, str | dict]) -> str:
+    data['color'] = CHALLENGE_COLORS.get(data['cr']) if data['cr'] in CHALLENGE_COLORS else HIGHER_CHALLENGE_COLOR
+
+    build_creature_ability_score_map(data)
+
+    return creature_template.render(data)
 
 
 def format_attunement(item: dict[str, str]):
@@ -116,3 +142,44 @@ def text_fits(card: dict[str, str], font_size: float) -> int:
         lines += 1
 
     return lines < max_lines
+
+
+def build_creature_ability_score_map(data: dict[str, str | dict]) -> None:
+    # Build the ability data map.
+    data['abilities'] = {}
+    for ability in ABILITIES:
+        score = int(data[ability])
+        mod = (score // 2) - 5
+
+        short = ability[:3].lower()
+
+        data['abilities'][short] = {
+            'short': short,
+            'score': str(score),
+            'mod': str(mod) if mod <= 0 else '+' + str(mod),
+            'sign': get_sign(mod),
+        }
+
+    # Add saving throw bonuses to ability map.
+    if data['saving_throws']:
+        saves = data['saving_throws'].split(', ')
+        for save_data in saves:
+            cap_name, save = save_data.split(' ')
+            short = cap_name.lower()
+
+            data['abilities'][short]['save'] = save
+            data['abilities'][short]['save_sign'] = get_sign(int(save))
+
+
+    data['initiative'] = data['abilities']['dex']['mod']
+    if data['initiative'] == '0':
+        data['initiative'] = '+0'
+
+
+def get_sign(n: int) -> str:
+    if n > 0:
+        return 'positive'
+    elif n == 0:
+        return 'neutral'
+    else:
+        return 'negative'

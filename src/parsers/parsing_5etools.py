@@ -32,17 +32,20 @@ sizes = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
 upcast_words = ['Using a Higher-Level Spell Slot.', 'At Higher Levels.', 'Cantrip Upgrade.']
 creature_types = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Creature', 'Dragon', 'Elemental', 'Fey', 'Fiend',
                   'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead']
-actions = ['Bonus Action', 'Action', 'Attack', 'Dash', 'Disengage', 'Dodge', 'Help', 'Hide', 'Magic', 'Search', 'Study']
+actions = ['Bonus Action', 'Action', 'Attack Action', 'Dash', 'Disengage', 'Dodge', 'Help', 'Hide', 'Magic', 'Search', 'Study']
 rules_words = ['AC', 'Armor Class', 'Advantage', 'Disadvantage', 'Difficult Terrain', 'Resistance', 'Immunity', 'Short Rest', 'Long Rest', 'Telepathy']
 environmental_words = ['Bright Light', 'Dim Light', 'Lightly Obscured', 'Heavily Obscured']
 senses = ['Blindsight', 'Darkvision', 'Tremorsense']
+
+attack_phrases = ['Melee Attack Roll', 'Ranged Attack Roll', 'Melee Weapon Attack', 'Ranged Weapon Attack', 'Melee Spell Attack', 'Ranged Spell Attack']
+
+
 bolded_words = abilities + skills + conditions + damage_types + areas + sizes + upcast_words + creature_types + actions + rules_words + environmental_words + senses
-bolded_patterns = [r'[0-9]+d[0-9]+( [+-] [0-9]+)?', r'[0-9]*[+-][0-9]+', r'[,0-9]+[ -]fe*o*t(-\w+)?', r'[0-9]+ percent']
+bolded_patterns = [r'\d+ \(\dd\d( \+ \d)?\)', r'\d+d\d+( [+-] \d+)?', r'\d*[+-]\d+', r'[,\d]+\+?[ -]fe*o*t(-\w+)?', r'\d+ percent', r'(^|(?<=\n))( ?\w+){1,3}\.']
 bolded_regex = re.compile('(' + '|'.join(bolded_words + bolded_patterns) + ')')
 
-italic_words = upcast_words + conditions
+italic_words = upcast_words + conditions + attack_phrases
 italic_regex = re.compile('(' + '|'.join(italic_words) + ')')
-
 
 def parse_csv(path: str) -> Generator[dict[str | Any, str | Any], Any, None]:
     file = open(path, "r")
@@ -57,6 +60,8 @@ def parse_csv(path: str) -> Generator[dict[str | Any, str | Any], Any, None]:
             process_spell(entry)
         elif card_type == 'Item':
             process_item(entry)
+        elif card_type == 'Creature':
+            process_creature(entry)
         yield entry
 
 
@@ -65,6 +70,8 @@ def get_csv_type(reader: csv.DictReader) -> str:
         return 'Spell'
     elif 'Rarity' in reader.fieldnames:
         return 'Item'
+    elif 'CR' in reader.fieldnames:
+        return 'Creature'
     else:
         raise TypeError(f'Unknown CSV type on fieldnames: {reader.fieldnames}')
 
@@ -118,24 +125,32 @@ def make_cardtext(spell: dict[str, str]):
 
     spell["Card Text"] = text
     sanitize_cardtext(spell)
-    format_words(spell)
+    format_cardtext(spell)
 
 
 def sanitize_cardtext(spell: dict[str, str]):
-    text = spell["Card Text"]
+    spell["Card Text"] = sanitize(spell["Card Text"])
 
+
+def sanitize(text: str) -> str:
     text = text.strip()
     text = text.replace(';', '-')
     text = re.sub(r';', '-', text)
     text = text.replace("\n", "\n\n")
-    text = re.sub(r'([.!?:]"?)(\S+)', '\\1\n\n\\2', text)
+    text = re.sub(r'([.!?:]"?)([^,\s]+)', '\\1\n\n\\2', text)
 
-    spell["Card Text"] = text
+    return text
 
 
-def format_words(spell: dict[str, str]):
+def format_cardtext(spell: dict[str, str]):
     spell["Card Text"] = re.sub(bolded_regex, '**\\g<1>**', spell["Card Text"])
     spell["Card Text"] = re.sub(italic_regex, '*\\g<1>*', spell["Card Text"])
+
+
+def format_text(text: str) -> str:
+    result = re.sub(bolded_regex, '**\\g<1>**', text)
+    result = re.sub(italic_regex, '*\\g<1>*', result)
+    return result
 
 
 def process_item(item: dict[str, str]) -> dict[str, str]:
@@ -153,6 +168,30 @@ def load_overrides() -> dict[str, dict[str, str]]:
     with open('overrides/card_overrides.json', 'r') as file:
         # Use json.load() to parse the file content into a Python dictionary
         return json.load(file)
+
+
+def process_creature(data: dict[str, str]) -> dict[str, str]:
+    data['Text'] = '\n:\n'.join(block for block in (data['Traits'], data['Actions']) if block)
+
+    # Sanitize empty language character.
+    if data['Languages'] in ['—', 'â€”']:
+        data['Languages'] = ''
+
+    # Combine damage / condition things.
+    data['Vulnerabilities'] = data['Damage Vulnerabilities']
+    data['Resistances'] = data['Damage Resistances']
+    data['Immunities'] = ', '.join(block for block in (data['Damage Immunities'] + data['Condition Immunities']) if block)
+
+    # Strip extra addenda out of some fields
+    data['AC'] = data['AC'].split(' ')[0]
+    data['CR'] = data['CR'].split(' ')[0]
+
+    # Sanitize text fields
+    for field in ['Traits', 'Actions', 'Bonus Actions', 'Reactions']:
+        data[field] = sanitize(data[field])
+        data[field] = format_text(data[field])
+
+    return data
 
 
 overrides = load_overrides()
