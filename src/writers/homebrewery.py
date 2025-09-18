@@ -129,6 +129,9 @@ def text_fits(card: dict[str, str], font_size: float) -> int:
     text = text.replace('\n\n', '\n   ')
     text = text.replace('\n   :\n   ', '\n\n\n')
 
+    if 'at_higher_levels' in card:
+        text += '\n\n' + card['at_higher_levels']
+
     # Count how many lines the text will take.
 
     lines = 0

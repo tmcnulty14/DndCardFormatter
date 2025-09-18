@@ -42,10 +42,10 @@ attack_phrases = ['Melee Attack Roll', 'Ranged Attack Roll', 'Melee Weapon Attac
 
 bolded_words = abilities + skills + conditions + damage_types + areas + sizes + upcast_words + creature_types + actions + rules_words + environmental_words + senses
 bolded_patterns = [r'\d+ \(\dd\d( \+ \d)?\)', r'\d+d\d+( [+-] \d+)?', r'\d*[+-]\d+', r'[,\d]+\+?[ -]fe*o*t(-\w+)?', r'\d+ percent', r'(^|(?<=\n))( ?\w+){1,3}\.']
-bolded_regex = re.compile('(' + '|'.join(bolded_words + bolded_patterns) + ')')
+bolded_regex = re.compile('(' + '|'.join([word + 's?' for word in bolded_words] + bolded_patterns) + ')')
 
 italic_words = upcast_words + conditions + attack_phrases
-italic_regex = re.compile('(' + '|'.join(italic_words) + ')')
+italic_regex = re.compile('(' + '|'.join([word + 's?' for word in italic_words]) + ')')
 
 def parse_csv(path: str) -> Generator[dict[str | Any, str | Any], Any, None]:
     file = open(path, "r")
@@ -119,17 +119,14 @@ def split_materials(spell: dict[str, str]):
 
 
 def make_cardtext(spell: dict[str, str]):
-    text = spell["Text"].strip()
-    if "At Higher Levels" in spell and spell["At Higher Levels"] is not None and len(spell["At Higher Levels"]) > 0:
-        text += '\n:\n' + spell["At Higher Levels"]
+    spell['Card Text'] = spell["Text"].strip()
+    # if "At Higher Levels" in spell and spell["At Higher Levels"] is not None and len(spell["At Higher Levels"]) > 0:
+    #     text += '\n:\n' + spell["At Higher Levels"]
 
-    spell["Card Text"] = text
-    sanitize_cardtext(spell)
-    format_cardtext(spell)
-
-
-def sanitize_cardtext(spell: dict[str, str]):
-    spell["Card Text"] = sanitize(spell["Card Text"])
+    for field in ['Card Text', 'At Higher Levels']:
+        if field in spell:
+            if len(field) > 0:
+                spell[field] = format_text(sanitize(spell[field]))
 
 
 def sanitize(text: str) -> str:
@@ -140,11 +137,6 @@ def sanitize(text: str) -> str:
     text = re.sub(r'([.!?:]"?)([^,\s]+)', '\\1\n\n\\2', text)
 
     return text
-
-
-def format_cardtext(spell: dict[str, str]):
-    spell["Card Text"] = re.sub(bolded_regex, '**\\g<1>**', spell["Card Text"])
-    spell["Card Text"] = re.sub(italic_regex, '*\\g<1>*', spell["Card Text"])
 
 
 def format_text(text: str) -> str:

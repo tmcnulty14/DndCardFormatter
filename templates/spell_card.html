@@ -17,6 +17,11 @@
 {% raw %}{{{% endraw %}cardbody,spellcardbody,font-size:{{ font_size }};
 {{ card_text }}
 {% raw %}}}{% endraw %}
+{%- if at_higher_levels %}
+{% raw %}{{{% endraw %}cardbody,spellcardbody,font-size:{{ font_size }};
+{{ at_higher_levels }}
+{% raw %}}}{% endraw %}
+{% endif %}
 {% raw %}{{{% endraw %}spellcardfooter
 |   |   |
 |:--|--:|
